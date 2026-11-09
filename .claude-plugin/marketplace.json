@@ -1,0 +1,13 @@
+{
+  "name": "narrate",
+  "owner": { "name": "daniardel" },
+  "description": "narrate: spoken updates for Claude Code on Windows.",
+  "plugins": [
+    {
+      "name": "narrate",
+      "source": "./",
+      "description": "Spoken updates for Claude Code on Windows (ElevenLabs v4 or the built-in Windows voice).",
+      "version": "0.1.0"
+    }
+  ]
+}
