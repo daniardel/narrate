@@ -1,7 +1,7 @@
 <#
   narrate: store (or remove) your ElevenLabs API key.
 
-  Opens a Windows sign-in dialog; paste the key into the Password box.
+  Opens a small always-on-top window; paste the key into it.
   The key never appears in the chat or on any command line. It is encrypted
   with Windows DPAPI into %APPDATA%\narrate\key.dat, readable only by your
   Windows account, then checked with one short test phrase.
@@ -29,12 +29,44 @@ if ($Remove) {
   exit 0
 }
 
-$cred = Get-Credential -UserName 'ElevenLabs API key' `
-  -Message 'narrate: paste your ElevenLabs API key into the Password box. It is encrypted for your Windows account only.'
-if (-not $cred -or -not $cred.Password -or $cred.Password.Length -eq 0) { 'Cancelled. No key stored.'; exit 1 }
+# A small always-on-top window, so it cannot open hidden behind the terminal.
+function Read-KeyDialog {
+  Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+  [Windows.Forms.Application]::EnableVisualStyles()
+  $f = New-Object Windows.Forms.Form
+  $f.Text = 'narrate: ElevenLabs API key'
+  $f.ClientSize = New-Object Drawing.Size 460, 186
+  $f.FormBorderStyle = 'FixedDialog'; $f.MaximizeBox = $false; $f.MinimizeBox = $false
+  $f.AutoScaleMode = 'Dpi'; $f.StartPosition = 'CenterScreen'; $f.TopMost = $true; $f.ShowInTaskbar = $true
+  $f.Font = New-Object Drawing.Font 'Segoe UI', 10
+  $l = New-Object Windows.Forms.Label
+  $l.Text = "Paste your ElevenLabs API key below.`nIt's encrypted for your Windows account and never shown in the chat."
+  $l.SetBounds(16, 14, 430, 56)
+  $t = New-Object Windows.Forms.TextBox
+  $t.UseSystemPasswordChar = $true; $t.SetBounds(16, 80, 428, 26)
+  $ok = New-Object Windows.Forms.Button
+  $ok.Text = 'Save key'; $ok.SetBounds(262, 130, 90, 34); $ok.DialogResult = 'OK'
+  $cancel = New-Object Windows.Forms.Button
+  $cancel.Text = 'Cancel'; $cancel.SetBounds(358, 130, 86, 34); $cancel.DialogResult = 'Cancel'
+  $f.Controls.AddRange(@($l, $t, $ok, $cancel))
+  $f.AcceptButton = $ok; $f.CancelButton = $cancel
+  # Claude Code starts commands with a "hidden window" request, which Windows applies to
+  # the first window a process shows. Showing it again explicitly makes it visible.
+  Add-Type -Namespace Narrate -Name Win -MemberDefinition '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);'
+  $f.Add_Shown({ [Narrate.Win]::ShowWindow($f.Handle, 5) | Out-Null; $f.TopMost = $true; $f.Activate(); $t.Focus() })
+  $result = $f.ShowDialog()
+  $value = $t.Text
+  $t.Text = ''; $f.Dispose()
+  if ($result -ne 'OK') { return $null }
+  return $value
+}
+
+$plain = Read-KeyDialog
+if (-not $plain -or -not $plain.Trim()) { 'Cancelled. No key stored.'; exit 1 }
 
 # Check the key with one short request before saving it.
-$plain = $cred.GetNetworkCredential().Password.Trim()
+$plain = $plain.Trim()
+$secure = ConvertTo-SecureString $plain -AsPlainText -Force
 $ok = $false
 try {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -53,7 +85,7 @@ $plain = $null
 
 if (-not $ok) { 'Key NOT saved.'; exit 1 }
 
-$cred.Password | ConvertFrom-SecureString | Set-Content -Path $KeyFile
+$secure | ConvertFrom-SecureString | Set-Content -Path $KeyFile
 'Key saved and working. Playing a test phrase...'
 try {
   Add-Type -AssemblyName PresentationCore

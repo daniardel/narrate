@@ -5,6 +5,7 @@
     -Event Stop          Claude finished a reply   -> speak a short summary
     -Event Notification  Claude needs you          -> speak a fixed alert (cached)
     -Event Interrupt     You submitted a prompt    -> stop speech in progress
+    -Event Welcome       First session after install -> one-time how-to message
   Manual:
     -Event Test [-Text "..."] [-VoiceId <id>]      -> speak a test phrase
 
@@ -18,7 +19,7 @@
   Data folder: %APPDATA%\narrate  (config.json, key.dat, narrate.log, cache\)
 #>
 param(
-  [ValidateSet('Stop', 'Notification', 'Interrupt', 'Test')]
+  [ValidateSet('Stop', 'Notification', 'Interrupt', 'Test', 'Welcome')]
   [string]$Event = 'Stop',
   [string]$Text,
   [string]$VoiceId
@@ -233,6 +234,17 @@ try {
   $hook = $null
   if ($Event -ne 'Test') { $hook = Read-HookInput }
   if ($Event -eq 'Interrupt') { Stop-CurrentSpeech; exit 0 }
+  if ($Event -eq 'Welcome') {
+    # Shown once, in the first session after install. Plain ASCII: PowerShell 5.1 stdout.
+    $marker = Join-Path $Data 'welcomed'
+    if (Test-Path $marker) { exit 0 }
+    Set-Content -Path $marker -Value (Get-Date -Format s)
+    $voice = if ($useEleven) { 'your ElevenLabs voice' } else { 'the free Windows voice' }
+    $next = if ($useEleven) { 'Run /narrate:voices to pick or search for voices.' } else { 'For much better voices, run /narrate:setup (ElevenLabs).' }
+    $msg = "narrate is on: you'll hear a short spoken update in $voice when Claude finishes or needs you. $next /narrate:off mutes it."
+    @{ systemMessage = $msg } | ConvertTo-Json -Compress
+    exit 0
+  }
   if (-not $cfg.enabled -and $Event -ne 'Test') { exit 0 }
 
   # Per-session voice: hash of the session ID picks from voiceIds, so each

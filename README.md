@@ -19,7 +19,10 @@ In Claude Code:
 /plugin install narrate@narrate
 ```
 
-It works straight away with the Windows voice. For ElevenLabs voices, run `/narrate:setup`.
+Restart Claude Code. It works straight away with the Windows voice, and the first session shows a one-line welcome. For ElevenLabs voices:
+
+1. `/narrate:setup`: a small window asks for your key, checks it, and says "Narrate is set up."
+2. `/narrate:voices`: pick from your voices, or search the library, with free previews. Pick several and each session gets its own voice.
 
 **Requires:** Windows 10 or 11, Windows PowerShell 5.1 (built in), and Claude Code with the `claude` command on PATH (used for summaries).
 
@@ -28,7 +31,7 @@ It works straight away with the Windows voice. For ElevenLabs voices, run `/narr
 | Command | What it does |
 |---|---|
 | `/narrate:setup` | Store your ElevenLabs API key through a Windows password dialog (`/narrate:setup remove` deletes it) |
-| `/narrate:voices` | List your voices, play previews, choose one or a rotation |
+| `/narrate:voices [search words]` | Pick your voice or a rotation. Search the 20,000+ voice ElevenLabs library (try `/narrate:voices funny old man`) and hear free previews that use no credits |
 | `/narrate:test [text]` | Speak a test phrase |
 | `/narrate:config [change]` | Show or change settings, such as length, volume, model or summaries |
 | `/narrate:off` / `/narrate:on` | Mute or unmute |
@@ -38,7 +41,7 @@ It works straight away with the Windows voice. For ElevenLabs voices, run `/narr
 Create a **restricted** key at elevenlabs.io → Developers → API Keys:
 
 - **Text to Speech:** Access (required)
-- **Voices:** Read (optional, lets `/narrate:voices` list your voices)
+- **Voices:** Read (optional, lets `/narrate:voices` list and search voices). Switch it to Write only while adding library voices to your account, then back to Read.
 - **Everything else:** no access
 - Set a **credit limit**. Updates are short (about 250 characters), so 100,000–200,000 credits a month is plenty.
 
@@ -61,7 +64,7 @@ Create a **restricted** key at elevenlabs.io → Developers → API Keys:
 
 ## Privacy and security
 
-- **Your key** is entered in a Windows dialog, never typed into the chat or onto a command line. It is stored encrypted with Windows DPAPI in `%APPDATA%\narrate\key.dat`, and only your Windows account can decrypt it.
+- **Your key** is entered in a small narrate window, never typed into the chat or onto a command line. It is stored encrypted with Windows DPAPI in `%APPDATA%\narrate\key.dat`, and only your Windows account can decrypt it.
 - **Claude's replies are never run as commands.** Text reaches ElevenLabs as a JSON request body, reaches the summarizer as standard input to `claude -p` (with all tools disabled), and reaches the Windows voice as an in-process .NET string. So a reply containing `&`, `|`, quotes or other shell characters is only ever spoken.
 - **What leaves your PC:** with ElevenLabs, the short spoken summary is sent to ElevenLabs. With summaries on, the reply is summarized by Claude Haiku through your own Claude Code login. In Windows-voice mode with `summarize: false`, nothing leaves your PC.
 - Hooks run in the background (`async`) and never slow Claude down.
