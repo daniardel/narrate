@@ -1,6 +1,6 @@
 {
   "name": "narrate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Spoken updates for Claude Code on Windows: hear a short summary when Claude finishes and an alert when it needs you. ElevenLabs voices (v4) or the free built-in Windows voice.",
   "author": { "name": "daniardel" },
   "license": "MIT",

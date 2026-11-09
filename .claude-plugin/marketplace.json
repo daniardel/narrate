@@ -7,7 +7,7 @@
       "name": "narrate",
       "source": "./",
       "description": "Spoken updates for Claude Code on Windows (ElevenLabs v4 or the built-in Windows voice).",
-      "version": "0.1.0"
+      "version": "0.1.1"
     }
   ]
 }

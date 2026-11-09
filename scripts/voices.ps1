@@ -7,6 +7,13 @@
 #>
 param([switch]$Windows)
 
+# When launched from Git Bash or PowerShell 7, PSModulePath points at PowerShell 7
+# modules and Windows PowerShell cannot load its own (Get-Credential,
+# ConvertTo-SecureString). Use Windows PowerShell's own module path.
+if ($PSVersionTable.PSEdition -ne 'Core') {
+  $env:PSModulePath = (@([Environment]::GetFolderPath('MyDocuments') + '\WindowsPowerShell\Modules',
+    "$env:ProgramFiles\WindowsPowerShell\Modules", "$PSHOME\Modules") -join ';')
+}
 $ErrorActionPreference = 'Stop'
 $KeyFile = Join-Path (Join-Path $env:APPDATA 'narrate') 'key.dat'
 
